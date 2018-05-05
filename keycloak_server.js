@@ -2,7 +2,7 @@ Keycloak = {};
 
 Keycloak.handleAuthFromAccessToken = function handleAuthFromAccessToken(accessToken, expiresAt) {
   var whitelisted = ['email', 'name', 'given_name', 'family_name',
-    'picture', 'preferred_username'];
+    'picture', 'preferred_username', 'roles'];
 
   var identity = getIdentity(accessToken);
 
