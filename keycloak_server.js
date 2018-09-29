@@ -1,3 +1,6 @@
+var GrantManager = Npm.require('keycloak-connect/middleware/auth-utils/grant-manager');
+var Config = Npm.require('keycloak-connect/middleware/auth-utils/config');
+
 Keycloak = {};
 
 Keycloak.handleAuthFromAccessToken = function handleAuthFromAccessToken(accessToken, expiresAt) {
@@ -47,25 +50,26 @@ var getTokenResponse = function (query) {
   if (!config)
     throw new ServiceConfiguration.ConfigError();
 
+  var grantConfig = new Config(config);
+  var grantManager = new GrantManager(grantConfig);
+
   var responseContent;
   try {
     // Request an access token
-    responseContent = HTTP.post(
-      `${config.authServerUrl}/auth/realms/${config.realm}/protocol/openid-connect/token`, {
-        params: {
-          grant_type: "authorization_code",
-          client_id: config.clientId,
-          redirect_uri: OAuth._redirectUri('keycloak', config),
-          client_secret: OAuth.openSecret(config.secret),
-          code: query.code
-        }
-      }).data;
+    var getResponseContent = Meteor.wrapAsync(function(callback) {
+      grantManager.obtainFromCode(
+        { session: { auth_redirect_uri: OAuth._redirectUri('keycloak', config) } },
+        query.code
+      ).then(result => callback(null, result)).catch(err => callback(err));
+    });
+
+    responseContent = getResponseContent();
   } catch (err) {
     throw _.extend(new Error("Failed to complete OAuth handshake with Keycloak. " + err.message),
                    {response: err.response});
   }
 
-  var kcAccessToken = responseContent.access_token;
+  var kcAccessToken = responseContent.access_token.token;
   var kcExpires = responseContent.expires_in;
 
   if (!kcAccessToken) {
@@ -83,11 +87,17 @@ var getIdentity = function (accessToken) {
   if (!config)
     throw new ServiceConfiguration.ConfigError();
 
+  var grantConfig = new Config(config);
+  var grantManager = new GrantManager(grantConfig);
+
   try {
-    return HTTP.get(
-      `${config.authServerUrl}/auth/realms/${config.realm}/protocol/openid-connect/userinfo`, {
-      headers: { Authorization: "Bearer " + accessToken }
-    }).data;
+    var getKeycloakIdentity = Meteor.wrapAsync(function(callback) {
+      grantManager.userInfo(accessToken)
+        .then(result => callback(null, result))
+        .catch(err => callback(err));
+    });
+
+    return getKeycloakIdentity();
   } catch (err) {
     throw _.extend(new Error("Failed to fetch identity from Keycloak. " + err.message),
                    {response: err.response});

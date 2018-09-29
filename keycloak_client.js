@@ -21,21 +21,15 @@ Keycloak.requestCredential = function (options, credentialRequestCompleteCallbac
   }
 
   var credentialToken = Random.secret();
-  var scope = "oidc";
   var loginStyle = OAuth._loginStyle('keycloak', config, options);
 
   var loginUrl =
-        `${config.authServerUrl}/auth/realms/${config.realm}/protocol/openid-connect/auth?` +
-        'client_id=' + config.clientId +
-        '&redirect_uri=' + OAuth._redirectUri('keycloak', config) + '&scope=' + scope +
-        '&state=' + OAuth._stateParam(loginStyle, credentialToken, options && options.redirectUrl) +
-        '&response_mode=' + encodeURIComponent('query') +
-        '&response_type=' + encodeURIComponent('code');
-
-  // Handle authentication type (e.g. for force login you need auth_type: "reauthenticate")
-  if (options && options.auth_type) {
-    loginUrl += "&auth_type=" + encodeURIComponent(options.auth_type);
-  }
+    `${config.serverUrl}/realms/${config.realm}/protocol/openid-connect/auth` +
+    '?client_id=' + encodeURIComponent(config.clientId) +
+    '&state=' + OAuth._stateParam(loginStyle, credentialToken, options && options.redirectUrl) +
+    '&redirect_uri=' + OAuth._redirectUri('keycloak', config) +
+    '&scope=' + encodeURIComponent(config.scope ? 'openid ' + config.scope : 'openid') +
+    '&response_type=code';
 
   OAuth.launchLogin({
     loginService: "keycloak",

@@ -1,8 +1,12 @@
 Package.describe({
-  name: "hotello:keycloak-oauth",
-  summary: "Keycloak OAuth flow",
-  version: "1.0.0",
-  git: "https://github.com/hotello/meteor-accounts-auth0.git"
+  name: 'hotello:keycloak-oauth',
+  summary: 'Keycloak OAuth flow',
+  version: '2.0.0',
+  git: 'https://github.com/hotello/meteor-accounts-auth0.git'
+});
+
+Npm.depends({
+  'keycloak-connect': '4.5.0'
 });
 
 Package.onUse(function(api) {
