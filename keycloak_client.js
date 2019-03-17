@@ -22,6 +22,7 @@ Keycloak.requestCredential = function (options, credentialRequestCompleteCallbac
 
   var credentialToken = Random.secret();
   var loginStyle = OAuth._loginStyle('keycloak', config, options);
+  var idpHint = options && options.idpHint ? '&kc_idp_hint=' + options.idpHint : '';
 
   var loginUrl =
     `${config.serverUrl}/realms/${config.realm}/protocol/openid-connect/auth` +
@@ -29,7 +30,7 @@ Keycloak.requestCredential = function (options, credentialRequestCompleteCallbac
     '&state=' + OAuth._stateParam(loginStyle, credentialToken, options && options.redirectUrl) +
     '&redirect_uri=' + OAuth._redirectUri('keycloak', config) +
     '&scope=' + encodeURIComponent(config.scope ? 'openid ' + config.scope : 'openid') +
-    '&response_type=code';
+    '&response_type=code' +  idpHint;
 
   OAuth.launchLogin({
     loginService: "keycloak",
